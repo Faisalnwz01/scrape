@@ -5,11 +5,11 @@ const parseAll = require('html-metadata').parseAll;
 
 
 /**
- * A basic Hello World function
- * @param {string} url Who you're saying hello to
- * @returns {string}
+ * A scraper to scrape Nyc court foreclosure properties 
+ * @param {string} url of the site you want to use
+ * @returns {object}
  */
-module.exports = (url = 'world', context, callback) => {
+module.exports = (url = 'https://www.nycourts.gov/courts/2jd/kings/civil/foreclosuresales.shtml', context, callback) => {
   console.log(context.params)
   var url = context.params.url;
   var query = context.params.query || 'a';

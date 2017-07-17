@@ -1,5 +1,5 @@
 # Scraper for nyc foreclosure properties 
-[![stdlib service](http://badge.stdlib.com/service/?service=scrapeNycProp&username=faisalnwz01&version=0.0.0)](https://stdlib.com/services/faisalnwz01/scrapeNycProp)
+[![stdlib service](http://badge.stdlib.com/service/?service=scrapeNycProp&username=faisalnwz01&version=0.0.1)](https://stdlib.com/services/faisalnwz01/scrapeNycProp)
 
 This is a scraper function that automatically pulls in [metadata](https://github.com/wikimedia/html-metadata) from the page, as well as supports simple HTML querying using [cheerio](https://github.com/cheeriojs/cheerio).
 

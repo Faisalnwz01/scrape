@@ -1,6 +1,6 @@
 {
   "name": "scrapeNycProp",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "",
   "author": "faisalnwz01 <faisalnwz01@gmail.com>",
   "main": "functions/__main__.js",
