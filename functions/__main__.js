@@ -1,11 +1,18 @@
+const publicConfig = {
+  key: 'AIzaSyAxF2aW5TWMiclJI5MdizMLBUFzXECbWM0',
+  stagger_time: 1000,
+  secure: true
+};
+
 const _ = require('lodash');
 const request = require('request');
 const cheerio = require('cheerio');
 const parseAll = require('html-metadata').parseAll;
-
+const GoogleMapsAPI = require('googlemaps');
+const gmAPI = new GoogleMapsAPI(publicConfig);
 
 /**
- * A scraper to scrape Nyc court foreclosure properties 
+ * A scraper to scrape Nyc court foreclosure properties
  * @param {string} url of the site you want to use
  * @returns {object}
  */
@@ -20,10 +27,12 @@ module.exports = (url = 'https://www.nycourts.gov/courts/2jd/kings/civil/foreclo
       'User-Agent': userAgent || 'stdlib/request/scraper v0.1'
     }
   };
-  request(options, function (err, response, body) {
+  request(options, function(err, response, body) {
     if (err) return callback(err)
     if (response.statusCode !== 200) return callback(null, body);
     var $ = cheerio.load(body);
+    var counter = 0;
+    var tempArray = [];
 
     parseAll($, (err, metadata) => {
       if (err) return callback(err);
@@ -41,13 +50,12 @@ module.exports = (url = 'https://www.nycourts.gov/courts/2jd/kings/civil/foreclo
         if (_.isObject(q)) {
           queryMatcher = q.match;
         }
-        $('a').map(function (i, link) {
+        $('a').map(function(i, link) {
           var href = $(link).attr('href');
           if (href) {
             if (!href.match('.pdf') || href.length < 5) return
             // geocode API
             pdfArray.push({
-              // 'PDFlink': domain + '/courts/2jd/kings/Civil/' + href,
               'PDFlink': `https://www.nycourts.gov/courts/2jd/kings/civil/${href}`,
               'address': href.split('/')[2].replace(/-/g, ' ').replace(/.pdf/g, '') + ', Brooklyn, Ny',
               'week': href.split('/')[1],
@@ -57,6 +65,36 @@ module.exports = (url = 'https://www.nycourts.gov/courts/2jd/kings/civil/foreclo
             });
           }
         });
+
+        _.each(pdfArray, function(prop) {
+          var geocodeParams = {
+            "address": prop.address,
+            "language": "en",
+            "region": "US"
+          };
+
+          gmAPI.geocode(geocodeParams, function(err, result) {
+            if (!err) {
+              prop.formatedAddress = result.results[0];
+              var params = {
+                location: result.results[0].geometry.location.lat + ',' + result.results[0].geometry.location.lng,
+                size: '1600x1200',
+                heading: 108.4,
+                pitch: 7,
+                fov: 40
+              };
+              prop.formatedAddress.streetView = gmAPI.streetView(params);
+              counter++;
+              if (counter === pdfArray.length) {
+                tempArray = pdfArray
+                result.query_value = pdfArray;
+                return callback(null, result);
+              }
+            } else {
+              console.log(err);
+            }
+          });
+        })
         return pdfArray;
       }
 
@@ -80,13 +118,14 @@ module.exports = (url = 'https://www.nycourts.gov/courts/2jd/kings/civil/foreclo
       } else if (query && query.length) {
         result.query = query;
         try {
-          result.query_value = performQuery(query);
+          performQuery(query);
         } catch (e) {
           result.query_error = e && e.message || e;
+          return callback(null, result);
         }
       }
 
-      return callback(null, result);
+      // return callback(null, result);
     });
   });
 
