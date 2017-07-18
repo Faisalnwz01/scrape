@@ -17,7 +17,6 @@ const gmAPI = new GoogleMapsAPI(publicConfig);
  * @returns {object}
  */
 module.exports = (url = 'https://www.nycourts.gov/courts/2jd/kings/civil/foreclosuresales.shtml', context, callback) => {
-  console.log(context.params)
   var url = context.params.url;
   var query = context.params.query || 'a';
   var userAgent = context.params.userAgent;
@@ -54,7 +53,6 @@ module.exports = (url = 'https://www.nycourts.gov/courts/2jd/kings/civil/foreclo
           var href = $(link).attr('href');
           if (href) {
             if (!href.match('.pdf') || href.length < 5) return
-            // geocode API
             pdfArray.push({
               'PDFlink': `https://www.nycourts.gov/courts/2jd/kings/civil/${href}`,
               'address': href.split('/')[2].replace(/-/g, ' ').replace(/.pdf/g, '') + ', Brooklyn, Ny',
@@ -72,9 +70,10 @@ module.exports = (url = 'https://www.nycourts.gov/courts/2jd/kings/civil/foreclo
             "language": "en",
             "region": "US"
           };
-
+          // geocode API
           gmAPI.geocode(geocodeParams, function(err, result) {
-            if (!err) {
+            counter++;
+            if (!err && result.status !== 'ZERO_RESULTS') {
               prop.formatedAddress = result.results[0];
               var params = {
                 location: result.results[0].geometry.location.lat + ',' + result.results[0].geometry.location.lng,
@@ -84,14 +83,11 @@ module.exports = (url = 'https://www.nycourts.gov/courts/2jd/kings/civil/foreclo
                 fov: 40
               };
               prop.formatedAddress.streetView = gmAPI.streetView(params);
-              counter++;
               if (counter === pdfArray.length) {
                 tempArray = pdfArray
                 result.query_value = pdfArray;
                 return callback(null, result);
               }
-            } else {
-              console.log(err);
             }
           });
         })
